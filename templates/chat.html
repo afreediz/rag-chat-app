@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Upload a File</h1>
+    <form id="upload-form">
+        <input type="file" name="file" id="file-input">
+        <button type="submit">Upload</button>
+    </form>
+
+    <h1>Chat Room</h1>
+    <div id="chat-box" style="border:1px solid #000; width:300px; height:300px; overflow:auto;"></div>
+    <input type="text" id="message" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // Handle form submission
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();  // Prevent default form submission
+
+            const formData = new FormData();
+            const fileInput = document.getElementById('file-input');
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    alert('File uploaded successfully!');
+                } else {
+                    alert('Failed to upload file.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while uploading the file.');
+            }
+        });
+
+        // Initialize SocketIO connection
+        const socket = io();
+
+        // Listen for messages from the server
+        socket.on('message', function(msg) {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('p');
+            messageElement.textContent = msg;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to bottom
+        });
+
+        // Send message to server
+        function sendMessage() {
+            const msg = document.getElementById('message').value;
+            socket.send(msg);  // Emit 'message' event
+            document.getElementById('message').value = '';  // Clear the input
+
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('p');
+            messageElement.textContent = msg;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to bottom
+        }
+    </script>
+</body>
+</html>
